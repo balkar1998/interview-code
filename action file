@@ -1,0 +1,217 @@
+<?php
+
+    require_once("conn.php");
+    class MainOpration extends Database
+    {
+        // get data ==================================================================================
+        // ===============================================================================
+        
+        function getData($table)
+        {
+            $record = array();
+            $sql = "select * from $table";
+            $result = $this->conn->prepare($sql);
+            $result->execute();
+            if ($result->rowCount() > 0) {
+                while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+                    $record[] =  $row;
+                }
+                return $record;
+            } else {
+                return $record = false;
+            }
+            $this->conn = null;
+        }
+
+        function getDataprice($table, $coloum, $range)
+        {
+            $record = array();
+            $sql = "select * from $table where $coloum BETWEEN $range ";
+            $result = $this->conn->prepare($sql);
+            $result->execute();
+            if ($result->rowCount() > 0) {
+                while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+                    $record[] =  $row;
+                }
+                return $record;
+            } else {
+                return $record = false;
+            }
+            $this->conn = null;
+        }
+
+        function getDataJoin()
+        {
+            $record = array();
+            $sql = "select products.name,products.price,products.id,products.img,products.qty,product_cat.cat_name FROM products INNER JOIN product_cat ON products.cat_id = product_cat.cat_id";
+            $result = $this->conn->prepare($sql);
+            $result->execute();
+            if ($result->rowCount() > 0) 
+            {
+                while ($row = $result->fetch(PDO::FETCH_ASSOC)) 
+                {
+                    $record[] =  $row;
+                }
+                return $record;
+            } else
+            {
+                return $record = false;
+            }
+        }
+        // select data ========================================================================================================
+        // ============================================================================================================
+        function selectDataAll($table, $where)
+        {
+            $sql = "";
+            $record = array();
+            $condition = "";
+            foreach ($where as $key => $value) {
+                $condition .= $key . "= ? and ";
+            }
+            $condition = substr($condition, 0, -5);
+            $sql .= "select * from $table where $condition";
+            $result = $this->conn->prepare($sql);
+            $result->execute(array_values($where));
+            if ($result->rowCount() > 0) {
+                while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+                    $record[] =  $row;
+                }
+                return $record;
+            } else {
+                return false;
+            }
+            $this->conn = null;
+        }
+
+
+        function selectDataLimit($table, $where, $limit)
+        {
+            $sql = "";
+            $record = array();
+            $condition = "";
+            foreach ($where as $key => $value) {
+                $condition .= $key . "= ? and ";
+            }
+            $condition = substr($condition, 0, -5);
+            $sql .= "select * from $table where $condition LIMIT $limit";
+            $result = $this->conn->prepare($sql);
+            $result->execute(array_values($where));
+            if ($result->rowCount() > 0) {
+                while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+                    $record[] =  $row;
+                }
+                return $record;
+            } else {
+                return false;
+            }
+            $this->conn = null;
+        }
+
+
+        function selectData($table, $where)
+        {
+            $sql = "";
+            $record = array();
+            $condition = "";
+            foreach ($where as $key => $value) {
+                $condition .= $key . "= ? and ";
+            }
+            $condition = substr($condition, 0, -5);
+            $sql .= "select * from $table where $condition";
+            $result = $this->conn->prepare($sql);
+            $result->execute(array_values($where));
+            if ($result->rowCount() > 0) {
+                $row = $result->fetch(PDO::FETCH_ASSOC);
+                return $row;
+            } else {
+                return false;
+            }
+            $this->conn = null;
+        }
+
+        // Row Counting ================================================================================================
+        // ============================================================================================================
+        function getrowcounting($table)
+        {
+            $sql = "select * from $table";
+            $result = $this->conn->prepare($sql);
+            $result->execute();
+            $rownumber = $result->rowCount();
+            return $rownumber;
+        }
+
+
+        function getrowcountingwhere($table, $it, $its)
+        {
+            $sql = "select * from $table where $it = '$its' ";
+            $result = $this->conn->prepare($sql);
+            $result->execute();
+            $rownumber = $result->rowCount();
+            return $rownumber;
+        }
+    
+
+        // insert data =========================================================================================
+        // ======================================================================================
+
+        function insertData($table, $fields)
+        {
+            $setval = "";
+            foreach ($fields as $key => $value) 
+            {
+                $setval .= "?,";
+            }
+            $setval = substr($setval, 0, -1);
+            $sql = "insert into $table (" . implode(",", array_keys($fields)) . ") values ($setval)";
+            $result = $this->conn->prepare($sql);
+            $result->execute(array_values($fields));
+            if ($result) {
+                return true;
+            } else {
+                return false;
+            }
+            $this->conn = null;
+        }
+    
+    }
+
+    $MainOprationobj = new MainOpration();
+
+
+
+    if (isset($_POST["login"])) {
+        // print_r($_POST);
+        // exit;
+        if (!empty($_POST["email"]) and !empty($_POST["password"])) 
+        {
+            unset($_POST["login"]);
+            // $_POST["password"] = $_POST["password"];
+            $record = $MainOprationobj->selectData("users", $_POST);
+            if ($record == false) 
+            {
+                $_SESSION['msg'] = "Not Match";
+                $_SESSION['status'] = "error";
+            }
+            else 
+            {
+                $_SESSION["email"] = $record["email"];
+                $_SESSION["firstname"] = $record["firstname"];
+                // print_r($_SESSION["name"]);
+                echo '<script>
+                window.location.assign("index.php");
+                </script>';
+            }
+        }
+        else 
+        {
+            $_SESSION['msg'] = "FIll all details";
+            $_SESSION['status'] = "error";
+        }
+        $page = "login.php";
+        echo '<script>
+        window.location.assign("' . $page . '");
+        </script>';
+    }
+
+
+?>
